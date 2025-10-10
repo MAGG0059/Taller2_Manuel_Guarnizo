@@ -1,25 +1,60 @@
-name: Node CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-and-push:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
+      - name: Run tests
         run: |
-          docker build -t manuelguarnizo/taller3:v2 .
-          docker push manuelguarnizo/taller3:v2
+          echo "Running tests..."
+          # Aquí irían tus comandos de testing
+          # mvn test, npm test, pytest, etc.
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          echo "Building Docker image..."
+          docker build -t manuelguarnizo/taller3:${{ github.sha }} .
+          docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
+
+      - name: Run security scan
+        run: |
+          echo "Running security scan..."
+          # docker scan manuelguarnizo/taller3:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build -t manuelguarnizo/taller3:prod-${{ github.sha }} .
+
+      - name: Deploy to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          docker push manuelguarnizo/taller3:prod-${{ github.sha }}
+          docker push manuelguarnizo/taller3:latest
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
