@@ -27,25 +27,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build Docker image
-        run: |
-          docker build -t manuelguarnizo/taller3:${{ github.sha }} .
-          docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
-
-      - name: Push to Docker Hub
-        env:
-          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-          docker push manuelguarnizo/taller3:${{ github.sha }}
-          docker push manuelguarnizo/taller3:latest
-
-      - name: Deploy to Azure Container App
-        uses: azure/CLI@v2
+      - name: Build and deploy to Container Apps
+        uses: azure/container-apps-deploy-action@v1
         with:
-          inlineScript: |
-            az containerapp update \
-              --name ${{ secrets.AZURE_CONTAINER_APP_NAME }} \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-              --image manuelguarnizo/taller3:${{ github.sha }}
+          appSourcePath: ${{ github.workspace }}
+          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          containerAppName: ${{ secrets.AZURE_CONTAINER_APP_NAME }}
+          containerAppEnvironment: ${{ secrets.AZURE_CONTAINER_APP_ENVIRONMENT }}
+          dockerfilePath: Dockerfile
