@@ -33,12 +33,12 @@ jobs:
           docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
           docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
           
-          echo "📋 Todas las imágenes locales:"
-          docker images
+          echo "📋 Verificando imágenes construidas:"
+          docker images | grep manuelguarnizo
 
       - name: Verify Docker image
         run: |
-          echo "🔍 Inspeccionando imagen..."
+          echo "🔍 Inspeccionando imágenes..."
           docker image inspect manuelguarnizo/taller3:develop-${{ github.sha }} --format '{{ .RepoTags }}'
           docker image inspect manuelguarnizo/taller3:develop-latest --format '{{ .RepoTags }}'
 
@@ -47,32 +47,43 @@ jobs:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "🔐 Login a Docker Hub..."
+          echo "🔐 Login a Docker Hub como: $DOCKER_USER"
           echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-          echo "✅ Login exitoso"
 
       - name: Push to Docker Hub
         run: |
-          echo "🚀 Haciendo PUSH..."
+          echo "🚀 Haciendo PUSH de las imágenes..."
+          echo "📦 Imagen a subir:"
+          docker images | grep manuelguarnizo
+          
+          echo "🔐 Usuario actual de Docker:"
+          cat ~/.docker/config.json | grep username || echo "No se pudo obtener username"
+          
+          echo "🏷️ Pusheando imágenes..."
           docker push manuelguarnizo/taller3:develop-${{ github.sha }}
           docker push manuelguarnizo/taller3:develop-latest
 
       - name: Verify push
         run: |
-          echo "✅ Verificando en Docker Hub..."
+          echo "✅ Verificando push en Docker Hub..."
           echo "🔗 URL: https://hub.docker.com/r/manuelguarnizo/taller3/tags"
-          sleep 10
-          curl -s "https://hub.docker.com/v2/repositories/manuelguarnizo/taller3/tags/?page_size=10" | jq '.results[].name'
+          sleep 15
+          echo "📡 Consultando API de Docker Hub..."
+          curl -s "https://hub.docker.com/v2/repositories/manuelguarnizo/taller3/tags/?page_size=10" | jq -r '.results[] | " - \(.name) (última actualización: \(.last_updated))"'
 
       - name: Show success with link
         run: |
-          echo "# ✅ Imágenes subidas:"
+          echo ""
+          echo "🎉 ✅ IMÁGENES SUBIDAS EXITOSAMENTE"
+          echo "======================================"
+          echo "📦 Imágenes disponibles:"
           echo "    - manuelguarnizo/taller3:develop-${{ github.sha }}"
           echo "    - manuelguarnizo/taller3:develop-latest"
           echo ""
-          echo "VER IMAGENES EN:"
-          echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          echo "🌐 VER IMÁGENES EN:"
+          echo "   https://hub.docker.com/r/manuelguarnizo/taller3/tags"
           echo ""
-          echo "Para usar la imagen:"
-          echo "docker pull manuelguarnizo/taller3:develop-latest"
-          echo "docker run -p 3000:3000 manuelguarnizo/taller3:develop-latest"
+          echo "🚀 PARA USAR LA IMAGEN:"
+          echo "   docker pull manuelguarnizo/taller3:develop-latest"
+          echo "   docker run -p 3000:3000 manuelguarnizo/taller3:develop-latest"
+          echo ""
