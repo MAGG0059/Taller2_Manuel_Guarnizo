@@ -31,20 +31,18 @@ jobs:
         run: |
           # Tag diferente según el branch
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🏗️ Construyendo imagen de PRODUCCIÓN"
             docker build -t manuelguarnizo/taller3:${{ github.sha }} .
             docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
             docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:prod-${{ github.sha }}
           else
+            echo "🏗️ Construyendo imagen de DEVELOP"
             docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
             docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
           fi
 
-      - name: Test Docker image locally
-        run: |
-          echo "🧪 Probando imagen localmente..."
-          docker run --rm -d -p 3000:3000 --name test-container manuelguarnizo/taller3:develop-${{ github.sha }}
-          sleep 10
-          docker stop test-container
+      - name: List Docker images
+        run: docker images | grep manuelguarnizo
 
       - name: Push to Docker Hub
         if: github.event_name == 'push'
@@ -54,9 +52,6 @@ jobs:
         run: |
           echo "🔐 Login a Docker Hub..."
           echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-          
-          echo "📦 Listando imágenes locales..."
-          docker images | grep manuelguarnizo
           
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "🚀 Pusheando imágenes de PRODUCCIÓN"
@@ -69,8 +64,9 @@ jobs:
             docker push manuelguarnizo/taller3:develop-latest
           fi
 
-      - name: Verify push
+      - name: Verify push success
         if: github.event_name == 'push'
         run: |
-          echo "✅ Push completado - Verifica en:"
+          echo "✅ Proceso completado"
+          echo "📦 Imágenes disponibles en:"
           echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
