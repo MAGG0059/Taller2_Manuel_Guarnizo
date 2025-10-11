@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: taller2
+    volumes:
+      - mongodb_data:/data/db
+
+  app:
+    build: .
+    container_name: taller3-app
+    ports:
+      - "3000:3000"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/taller2
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb_data:

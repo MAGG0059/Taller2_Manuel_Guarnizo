@@ -7,4 +7,5 @@ COPY target/taller2-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 3000
 
+# FORMA CORRECTA - cada parámetro separado
 ENTRYPOINT ["java", "-jar", "-Dserver.port=3000", "app.jar"]
