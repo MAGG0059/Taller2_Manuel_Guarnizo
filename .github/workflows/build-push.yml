@@ -33,30 +33,44 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             docker build -t manuelguarnizo/taller3:${{ github.sha }} .
             docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
+            docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:prod-${{ github.sha }}
           else
             docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
             docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
           fi
 
+      - name: Test Docker image locally
+        run: |
+          echo "🧪 Probando imagen localmente..."
+          docker run --rm -d -p 3000:3000 --name test-container manuelguarnizo/taller3:develop-${{ github.sha }}
+          sleep 10
+          docker stop test-container
+
       - name: Push to Docker Hub
         if: github.event_name == 'push'
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "🔐 Login a Docker Hub..."
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+          
+          echo "📦 Listando imágenes locales..."
+          docker images | grep manuelguarnizo
           
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "🚀 Pusheando imágenes de PRODUCCIÓN"
             docker push manuelguarnizo/taller3:${{ github.sha }}
             docker push manuelguarnizo/taller3:latest
+            docker push manuelguarnizo/taller3:prod-${{ github.sha }}
           else
             echo "🧪 Pusheando imágenes de DEVELOP"
             docker push manuelguarnizo/taller3:develop-${{ github.sha }}
             docker push manuelguarnizo/taller3:develop-latest
           fi
 
-      - name: Deploy to production (solo en main)
-        if: github.ref == 'refs/heads/main'
+      - name: Verify push
+        if: github.event_name == 'push'
         run: |
-          echo "🎯 Desplegando en PRODUCCIÓN"
-          echo "Imagen: manuelguarnizo/taller3:${{ github.sha }}"
-          # Aquí irían los comandos de despliegue a Kubernetes/Azure
-          # kubectl set image deployment/taller3-api taller3-api=manuelguarnizo/taller3:${{ github.sha }}
+          echo "✅ Push completado - Verifica en:"
+          echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
