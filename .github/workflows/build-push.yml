@@ -60,3 +60,16 @@ jobs:
           echo "🔗 URL: https://hub.docker.com/r/manuelguarnizo/taller3/tags"
           sleep 10
           curl -s "https://hub.docker.com/v2/repositories/manuelguarnizo/taller3/tags/?page_size=10" | jq '.results[].name'
+
+      - name: Show success with link
+        run: |
+          echo "🎉 ¡ÉXITO! Imágenes pusheadas:"
+          echo "   - manuelguarnizo/taller3:develop-${{ github.sha }}"
+          echo "   - manuelguarnizo/taller3:develop-latest"
+          echo ""
+          echo "🔗 VER IMÁGENES EN:"
+          echo "   https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          echo ""
+          echo "📱 Para usar la imagen:"
+          echo "   docker pull manuelguarnizo/taller3:develop-latest"
+          echo "   docker run -p 3000:3000 manuelguarnizo/taller3:develop-latest"
