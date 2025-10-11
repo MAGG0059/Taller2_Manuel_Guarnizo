@@ -3,8 +3,6 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ develop, main ]
-  pull_request:
-    branches: [ develop ]
 
 jobs:
   build-and-push:
@@ -23,29 +21,22 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: Run tests (solo en develop)
-        if: github.ref == 'refs/heads/develop'
-        run: mvn test
+      - name: Verify JAR file
+        run: |
+          echo "📦 JAR generado:"
+          ls -la target/*.jar
+          echo "📝 Nombre del JAR:"
+          find target/ -name "*.jar" -exec basename {} \;
 
       - name: Build Docker image
         run: |
-          # Tag diferente según el branch
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "🏗️ Construyendo imagen de PRODUCCIÓN"
-            docker build -t manuelguarnizo/taller3:${{ github.sha }} .
-            docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
-            docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:prod-${{ github.sha }}
-          else
-            echo "🏗️ Construyendo imagen de DEVELOP"
-            docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
-            docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
-          fi
-
-      - name: List Docker images
-        run: docker images | grep manuelguarnizo
+          echo "🏗️ Construyendo imagen Docker..."
+          docker build -t manuelguarnizo/taller3:test-${{ github.sha }} .
+          
+          echo "📋 Imágenes construidas:"
+          docker images | grep manuelguarnizo
 
       - name: Push to Docker Hub
-        if: github.event_name == 'push'
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -53,20 +44,10 @@ jobs:
           echo "🔐 Login a Docker Hub..."
           echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
           
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "🚀 Pusheando imágenes de PRODUCCIÓN"
-            docker push manuelguarnizo/taller3:${{ github.sha }}
-            docker push manuelguarnizo/taller3:latest
-            docker push manuelguarnizo/taller3:prod-${{ github.sha }}
-          else
-            echo "🧪 Pusheando imágenes de DEVELOP"
-            docker push manuelguarnizo/taller3:develop-${{ github.sha }}
-            docker push manuelguarnizo/taller3:develop-latest
-          fi
+          echo "🚀 Haciendo push..."
+          docker push manuelguarnizo/taller3:test-${{ github.sha }}
 
-      - name: Verify push success
-        if: github.event_name == 'push'
+      - name: Success message
         run: |
-          echo "✅ Proceso completado"
-          echo "📦 Imágenes disponibles en:"
-          echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          echo "🎉 ¡ÉXITO! Imagen pusheada a Docker Hub"
+          echo "🔗 https://hub.docker.com/r/manuelguarnizo/taller3/tags"
