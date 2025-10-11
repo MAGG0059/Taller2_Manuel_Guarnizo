@@ -66,7 +66,7 @@ jobs:
           echo "    - manuelquarnizo/taller3:develop-latest"
           echo ""
           echo "VER IMAGENES EN:"
-          echo "https://hub.docker.com/r/manuelquamizo/taller3/tags"
+          echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
           echo ""
           echo "Para usar la imagen:"
           echo "docker pull manuelguarnizo/taller3:develop-latest"
