@@ -63,13 +63,11 @@ jobs:
 
       - name: Show success with link
         run: |
-          echo "🎉 ¡ÉXITO! Imágenes pusheadas:"
-          echo "   - manuelguarnizo/taller3:develop-${{ github.sha }}"
-          echo "   - manuelguarnizo/taller3:develop-latest"
+          echo "    - manuelquarnizo/taller3:develop-latest"
           echo ""
-          echo "🔗 VER IMÁGENES EN:"
-          echo "   https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          echo "VER IMAGENES EN:"
+          echo "https://hub.docker.com/r/manuelquamizo/taller3/tags"
           echo ""
-          echo "📱 Para usar la imagen:"
-          echo "   docker pull manuelguarnizo/taller3:develop-latest"
-          echo "   docker run -p 3000:3000 manuelguarnizo/taller3:develop-latest"
+          echo "Para usar la imagen:"
+          echo "docker pull manuelquamizo/taller3:develop-latest"
+          echo "docker run -p 3000:3000 manuelquamizo/taller3:develop-latest"
