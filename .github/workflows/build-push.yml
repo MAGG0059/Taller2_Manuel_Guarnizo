@@ -30,7 +30,8 @@ jobs:
       - name: Build Docker image
         run: |
           echo "🏗️ Construyendo imagen Docker..."
-          docker build -t manuelguarnizo/taller3:debug-${{ github.sha }} .
+          docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
+          docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
           
           echo "📋 Todas las imágenes locales:"
           docker images
@@ -38,7 +39,8 @@ jobs:
       - name: Verify Docker image
         run: |
           echo "🔍 Inspeccionando imagen..."
-          docker image inspect manuelguarnizo/taller3:debug-${{ github.sha }} --format '{{ .RepoTags }}'
+          docker image inspect manuelguarnizo/taller3:develop-${{ github.sha }} --format '{{ .RepoTags }}'
+          docker image inspect manuelguarnizo/taller3:develop-latest --format '{{ .RepoTags }}'
 
       - name: Login to Docker Hub
         env:
@@ -52,7 +54,8 @@ jobs:
       - name: Push to Docker Hub
         run: |
           echo "🚀 Haciendo PUSH..."
-          docker push manuelguarnizo/taller3:debug-${{ github.sha }}
+          docker push manuelguarnizo/taller3:develop-${{ github.sha }}
+          docker push manuelguarnizo/taller3:develop-latest
 
       - name: Verify push
         run: |
@@ -63,7 +66,9 @@ jobs:
 
       - name: Show success with link
         run: |
-          echo "    - manuelquarnizo/taller3:develop-latest"
+          echo "# ✅ Imágenes subidas:"
+          echo "    - manuelguarnizo/taller3:develop-${{ github.sha }}"
+          echo "    - manuelguarnizo/taller3:develop-latest"
           echo ""
           echo "VER IMAGENES EN:"
           echo "https://hub.docker.com/r/manuelguarnizo/taller3/tags"
