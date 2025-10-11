@@ -1,0 +1,64 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Run tests (solo en develop)
+        if: github.ref == 'refs/heads/develop'
+        run: mvn test
+
+      - name: Build Docker image
+        run: |
+          # Tag diferente según el branch
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            docker build -t manuelguarnizo/taller3:${{ github.sha }} .
+            docker tag manuelguarnizo/taller3:${{ github.sha }} manuelguarnizo/taller3:latest
+          else
+            docker build -t manuelguarnizo/taller3:develop-${{ github.sha }} .
+            docker tag manuelguarnizo/taller3:develop-${{ github.sha }} manuelguarnizo/taller3:develop-latest
+          fi
+
+      - name: Push to Docker Hub
+        if: github.event_name == 'push'
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "🔐 Login a Docker Hub..."
+          echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+          
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🚀 Pusheando imágenes de PRODUCCIÓN"
+            docker push manuelguarnizo/taller3:${{ github.sha }}
+            docker push manuelguarnizo/taller3:latest
+          else
+            echo "🧪 Pusheando imágenes de DEVELOP"
+            docker push manuelguarnizo/taller3:develop-${{ github.sha }}
+            docker push manuelguarnizo/taller3:develop-latest
+          fi
+
+      - name: Deploy to production (solo en main)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "🎯 Desplegando en PRODUCCIÓN"
+          echo "Imagen: manuelguarnizo/taller3:${{ github.sha }}"
