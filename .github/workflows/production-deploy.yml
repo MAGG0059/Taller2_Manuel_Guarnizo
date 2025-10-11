@@ -1,0 +1,43 @@
+name: Production Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Container App
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            echo "🔄 Desplegando aplicación a Azure..."
+            az containerapp update \
+              --name ${{ secrets.AZURE_CONTAINER_APP_NAME }} \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --image docker.io/openjdk:17-jdk-slim \
+              --set-env-vars "SPRING_PROFILES_ACTIVE=prod" \
+              --command-line "java -jar -Dserver.port=3000 /app/app.jar"
+            
+            echo "✅ Despliegue completado"
+            echo "🌐 URL: https://${{ secrets.AZURE_CONTAINER_APP_NAME }}.azurecontainerapps.io"
