@@ -2,11 +2,8 @@ FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-# Copia el JAR específico (usa el nombre real)
+# Copia el JAR específico
 COPY target/taller2-0.0.1-SNAPSHOT.jar app.jar
-
-# Verifica que se copió
-RUN ls -la /app/
 
 EXPOSE 3000
 

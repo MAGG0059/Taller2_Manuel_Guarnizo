@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ develop ]
 
 jobs:
   build-and-push:
@@ -21,33 +21,42 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      - name: Verify JAR file
+      - name: Verify JAR exists
         run: |
-          echo "📦 JAR generado:"
-          ls -la target/*.jar
-          echo "📝 Nombre del JAR:"
-          find target/ -name "*.jar" -exec basename {} \;
+          echo "📦 Verificando JAR:"
+          ls -la target/
+          jar tf target/taller2-0.0.1-SNAPSHOT.jar | head -5
 
       - name: Build Docker image
         run: |
           echo "🏗️ Construyendo imagen Docker..."
-          docker build -t manuelguarnizo/taller3:test-${{ github.sha }} .
+          docker build -t manuelguarnizo/taller3:debug-${{ github.sha }} .
           
-          echo "📋 Imágenes construidas:"
-          docker images | grep manuelguarnizo
+          echo "📋 Todas las imágenes locales:"
+          docker images
 
-      - name: Push to Docker Hub
+      - name: Verify Docker image
+        run: |
+          echo "🔍 Inspeccionando imagen..."
+          docker image inspect manuelguarnizo/taller3:debug-${{ github.sha }} --format '{{ .RepoTags }}'
+
+      - name: Login to Docker Hub
         env:
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           echo "🔐 Login a Docker Hub..."
           echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-          
-          echo "🚀 Haciendo push..."
-          docker push manuelguarnizo/taller3:test-${{ github.sha }}
+          echo "✅ Login exitoso"
 
-      - name: Success message
+      - name: Push to Docker Hub
         run: |
-          echo "🎉 ¡ÉXITO! Imagen pusheada a Docker Hub"
-          echo "🔗 https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          echo "🚀 Haciendo PUSH..."
+          docker push manuelguarnizo/taller3:debug-${{ github.sha }}
+
+      - name: Verify push
+        run: |
+          echo "✅ Verificando en Docker Hub..."
+          echo "🔗 URL: https://hub.docker.com/r/manuelguarnizo/taller3/tags"
+          sleep 10
+          curl -s "https://hub.docker.com/v2/repositories/manuelguarnizo/taller3/tags/?page_size=10" | jq '.results[].name'
