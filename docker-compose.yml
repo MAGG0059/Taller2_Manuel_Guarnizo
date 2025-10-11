@@ -12,11 +12,12 @@ services:
 
   app:
     build: .
-    container_name: taller3-app
+    container_name: taller2-app
     ports:
       - "3000:3000"
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/taller2
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
       - mongodb
 
